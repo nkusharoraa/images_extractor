@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Image Downloader</title>
+    <title>Image Downloader</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -40,7 +40,7 @@
                 <form id="config-form">
                     <div class="form-group">
                         <label for="queries">Search Queries (comma separated)</label>
-                        <textarea id="queries" rows="3" placeholder="e.g. Porsche 911, Ferrari F40">Akaza</textarea>
+                        <textarea id="queries" rows="3" placeholder="e.g. Sunset, Mountain, Ocean">Akaza</textarea>
                     </div>
 
                     <div class="form-row">
@@ -57,7 +57,7 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="suffix">Search Suffix</label>
-                            <input type="text" id="suffix" value="car studio background">
+                            <input type="text" id="suffix" value="studio background">
                         </div>
                         <div class="form-group">
                             <label for="variance">Variance Threshold (-1 to disable)</label>
@@ -66,8 +66,8 @@
                     </div>
 
                     <div class="form-group checkbox-group">
-                        <input type="checkbox" id="validate" checked>
-                        <label for="validate">Enable Car Validation (MobileNetSSD)</label>
+                        <input type="checkbox" id="validate">
+                        <label for="validate">Enable Object Validation (MobileNetSSD)</label>
                     </div>
 
                     <div class="actions">

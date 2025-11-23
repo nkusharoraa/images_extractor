@@ -4,7 +4,7 @@ import queue
 import time
 import logging
 from flask import Flask, render_template, request, jsonify, Response, send_from_directory
-from download_cars import download_images, DOWNLOAD_DIR
+from download_images import download_images, DOWNLOAD_DIR
 
 app = Flask(__name__)
 

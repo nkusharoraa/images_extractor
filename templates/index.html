@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Image Downloader</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <div class="app-wrapper">
+        <header>
+            <div class="logo-area">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                </div>
+                <h1>Image<span class="highlight">Extractor</span></h1>
+            </div>
+            <div class="status-indicator" id="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Ready</span>
+            </div>
+        </header>
+
+        <main>
+            <section class="config-panel">
+                <h2>Configuration</h2>
+                <form id="config-form">
+                    <div class="form-group">
+                        <label for="queries">Search Queries (comma separated)</label>
+                        <textarea id="queries" rows="3" placeholder="e.g. Porsche 911, Ferrari F40">Akaza</textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="min_width">Min Width (px)</label>
+                            <input type="number" id="min_width" value="1000">
+                        </div>
+                        <div class="form-group">
+                            <label for="min_size">Min Size (KB)</label>
+                            <input type="number" id="min_size" value="50">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="suffix">Search Suffix</label>
+                            <input type="text" id="suffix" value="car studio background">
+                        </div>
+                        <div class="form-group">
+                            <label for="variance">Variance Threshold (-1 to disable)</label>
+                            <input type="number" id="variance" value="-1">
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="validate" checked>
+                        <label for="validate">Enable Car Validation (MobileNetSSD)</label>
+                    </div>
+
+                    <div class="actions">
+                        <button type="submit" id="start-btn" class="btn primary">Start Download</button>
+                        <button type="button" id="stop-btn" class="btn danger" disabled>Stop</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="output-panel">
+                <div class="tabs">
+                    <button class="tab active" data-target="logs">Logs</button>
+                    <button class="tab" data-target="gallery">Gallery</button>
+                </div>
+
+                <div id="logs" class="tab-content active">
+                    <div class="log-console" id="log-console">
+                        <div class="log-line system">System ready. Waiting for command...</div>
+                    </div>
+                </div>
+
+                <div id="gallery" class="tab-content">
+                    <div class="gallery-grid" id="gallery-grid">
+                        <!-- Images will appear here -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

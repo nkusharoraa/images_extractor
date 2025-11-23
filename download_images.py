@@ -11,6 +11,12 @@ from icrawler import ImageDownloader
 from icrawler.builtin import BingImageCrawler
 from icrawler.builtin.bing import BingParser
 from clean_images import is_car, dhash
+try:
+    import ollama
+    OLLAMA_AVAILABLE = True
+except ImportError:
+    OLLAMA_AVAILABLE = False
+    logging.warning("Ollama library not installed. Falling back to manual filename sanitization.")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -32,6 +38,66 @@ def sanitize_filename(name):
     # Remove invalid characters and excessive length
     clean = "".join([c for c in name if c.isalpha() or c.isdigit() or c in (' ', '_', '-')]).strip()
     return clean[:100] # Limit length
+
+def generate_filename_with_ollama(original_filename, max_retries=2):
+    """
+    Use Ollama's LLaMA 3.1 8B model to generate a cleaned filename.
+    
+    Args:
+        original_filename: The original filename/title from the image metadata
+        max_retries: Number of retry attempts if API call fails
+    
+    Returns:
+        A cleaned filename string suitable for filesystem use
+    """
+    if not OLLAMA_AVAILABLE:
+        logging.debug(f"Ollama not available, using manual sanitization for: {original_filename}")
+        return sanitize_filename(original_filename)
+    
+    if not original_filename or original_filename.strip() == "":
+        return "Unknown_Car"
+    
+    # Construct the prompt
+    prompt = f"""Suggest a title for this image removing any helper and unnecessary texts, remove the owner name and give the cleaned file name.
+
+Original filename: {original_filename}
+
+Provide ONLY the cleaned filename without any extension, explanations, or additional text. The filename should be concise, descriptive, and filesystem-safe (use only letters, numbers, spaces, hyphens, and underscores)."""
+    
+    for attempt in range(max_retries):
+        try:
+            response = ollama.generate(
+                model='llama3.1:8b',
+                prompt=prompt,
+                options={
+                    'temperature': 0.3,  # Lower temperature for more consistent output
+                    'num_predict': 50,   # Limit response length
+                }
+            )
+            
+            # Extract the response text
+            cleaned_name = response.get('response', '').strip()
+            
+            # Remove any quotes, periods, or other unwanted characters that might be in the response
+            cleaned_name = cleaned_name.strip('"\'.,')
+            
+            # Additional sanitization to ensure filesystem compatibility
+            cleaned_name = sanitize_filename(cleaned_name)
+            
+            if cleaned_name:
+                logging.info(f"AI-generated filename: '{original_filename}' -> '{cleaned_name}'")
+                return cleaned_name
+            else:
+                logging.warning(f"Empty response from Ollama for: {original_filename}")
+                
+        except Exception as e:
+            logging.warning(f"Ollama API error (attempt {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                continue
+    
+    # Fallback to manual sanitization if all retries fail
+    logging.info(f"Falling back to manual sanitization for: {original_filename}")
+    return sanitize_filename(original_filename)
 
 def get_dominant_color(image_path, k=3):
     try:
@@ -375,10 +441,15 @@ def download_images(queries, min_width=MIN_WIDTH, min_file_size_kb=MIN_FILE_SIZE
 
                 detected_color = get_dominant_color(temp_path)
                 
-                # Construct new filename from title
-                # Remove common junk words
-                clean_title = sanitize_filename(title)
+                # Construct new filename from title using AI
+                clean_title = generate_filename_with_ollama(title)
+                
+                # Remove common junk words as additional cleanup
                 clean_title = clean_title.replace("Wallpapers", "").replace("Background", "").replace("Images", "").strip()
+                
+                # If the cleaned title is empty after removing junk words, use a fallback
+                if not clean_title:
+                    clean_title = sanitize_filename(title)
                 
                 new_filename = f"{clean_title}_{detected_color}.jpg"
                 dest_path = os.path.join(run_dir, new_filename)

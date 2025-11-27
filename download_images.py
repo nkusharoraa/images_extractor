@@ -22,7 +22,8 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Configuration
-DOWNLOAD_DIR = r"d:\images_extractor"
+# Use the directory where this script is located instead of a hardcoded path
+DOWNLOAD_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMP_DIR = os.path.join(DOWNLOAD_DIR, "temp")
 MIN_WIDTH = 1000
 MIN_FILE_SIZE_KB = 50

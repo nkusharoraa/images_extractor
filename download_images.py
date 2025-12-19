@@ -11,6 +11,8 @@ from icrawler import ImageDownloader
 from icrawler.builtin import BingImageCrawler
 from icrawler.builtin.bing import BingParser
 from clean_images import is_car, dhash
+from alphacoders_downloader import AlphaCodersDownloader
+from wallhaven_downloader import WallHavenDownloader
 try:
     import ollama
     OLLAMA_AVAILABLE = True
@@ -351,7 +353,21 @@ class LogQueueHandler(logging.Handler):
     def emit(self, record):
         self.log_queue.put(self.format(record))
 
-def download_images(queries, min_width=MIN_WIDTH, min_file_size_kb=MIN_FILE_SIZE_KB, search_suffix="car studio background", validate_car=True, variance_threshold=BACKGROUND_VARIANCE_THRESHOLD, stop_event=None, log_queue=None):
+def download_images(queries, min_width=MIN_WIDTH, min_file_size_kb=MIN_FILE_SIZE_KB, search_suffix="car studio background", validate_car=True, variance_threshold=BACKGROUND_VARIANCE_THRESHOLD, source="bing", stop_event=None, log_queue=None):
+    """
+    Download images from various sources
+    
+    Args:
+        queries: List of search queries
+        min_width: Minimum image width in pixels
+        min_file_size_kb: Minimum file size in KB
+        search_suffix: Additional keywords to append to query (only for Bing)
+        validate_car: Whether to validate if image contains a car
+        variance_threshold: Background variance threshold for filtering
+        source: Image source - "bing", "alphacoders", or "wallhaven" (default: "bing")
+        stop_event: Threading event for stopping download
+        log_queue: Queue for logging messages
+    """
     # Setup logging for web app if queue provided
     if log_queue:
         queue_handler = LogQueueHandler(log_queue)
@@ -362,10 +378,11 @@ def download_images(queries, min_width=MIN_WIDTH, min_file_size_kb=MIN_FILE_SIZE
     
     # Create a unique subfolder for this run
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir = os.path.join(DOWNLOAD_DIR, f"run_{timestamp}")
+    run_dir = os.path.join(DOWNLOAD_DIR, f"run_{timestamp}_{source}")
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
     logging.info(f"Saving images to: {run_dir}")
+    logging.info(f"Image source: {source.upper()}")
     
     # Load existing hashes to avoid duplicates across runs
     seen_hashes = set()
@@ -377,24 +394,35 @@ def download_images(queries, min_width=MIN_WIDTH, min_file_size_kb=MIN_FILE_SIZE
 
         logging.info(f"Searching for: {query}")
         
-        crawler = CustomBingCrawler(
-            feeder_threads=1,
-            parser_threads=1,
-            downloader_threads=4,
-            downloader_cls=CustomImageDownloader,
-            parser_cls=CustomBingParser,
-            storage={'root_dir': TEMP_DIR}
-        )
-        
-        keyword = f"{query} {search_suffix}".strip()
-        crawler.crawl(keyword=keyword, max_num=1000, filters=dict(size='large'))
-        
-        # Clean up crawler threads
-        try:
-            if hasattr(crawler, 'feeder_cls'):
-                crawler.signal.set(crawler.signal.SignalType.STOP)
-        except:
-            pass
+        # Choose download source
+        if source.lower() == "alphacoders":
+            # Use AlphaCoders downloader (may be blocked by anti-scraping)
+            alphacoders = AlphaCodersDownloader(TEMP_DIR, delay=1.0)
+            alphacoders.search_and_download(query, max_images=100, category="cars")
+        elif source.lower() == "wallhaven":
+            # Use WallHaven downloader (uses official API - recommended)
+            wallhaven = WallHavenDownloader(TEMP_DIR, delay=1.0)
+            wallhaven.search_and_download(query, max_images=100, min_resolution=f"{min_width}x600")
+        else:
+            # Use Bing crawler (default)
+            crawler = CustomBingCrawler(
+                feeder_threads=1,
+                parser_threads=1,
+                downloader_threads=4,
+                downloader_cls=CustomImageDownloader,
+                parser_cls=CustomBingParser,
+                storage={'root_dir': TEMP_DIR}
+            )
+            
+            keyword = f"{query} {search_suffix}".strip()
+            crawler.crawl(keyword=keyword, max_num=1000, filters=dict(size='large'))
+            
+            # Clean up crawler threads
+            try:
+                if hasattr(crawler, 'feeder_cls'):
+                    crawler.signal.set(crawler.signal.SignalType.STOP)
+            except:
+                pass
         
         # Process downloaded images
         for filename in os.listdir(TEMP_DIR):
@@ -469,8 +497,25 @@ def download_images(queries, min_width=MIN_WIDTH, min_file_size_kb=MIN_FILE_SIZE
 if __name__ == "__main__":
     print("--- Car Image Downloader ---")
     
+    # Get image source
+    print("\nAvailable image sources:")
+    print("1. Bing (default) - Fast, high volume")
+    print("2. WallHaven (recommended) - High-quality wallpapers with API")
+    print("3. AlphaCoders - Premium wallpapers (may be blocked)")
+    source_choice = input("Choose image source (1, 2, or 3) [default 1]: ").strip()
+    
+    if source_choice == "2":
+        source = "wallhaven"
+        print("Using WallHaven as image source")
+    elif source_choice == "3":
+        source = "alphacoders"
+        print("Using AlphaCoders as image source (may encounter blocking)")
+    else:
+        source = "bing"
+        print("Using Bing as image source")
+    
     # Get search queries
-    user_query = input("Enter car names to search (comma-separated), or press Enter for default list: ").strip()
+    user_query = input("\nEnter car names to search (comma-separated), or press Enter for default list: ").strip()
     if user_query:
         queries = [q.strip() for q in user_query.split(",") if q.strip()]
     else:
@@ -536,12 +581,13 @@ if __name__ == "__main__":
         variance_threshold = BACKGROUND_VARIANCE_THRESHOLD
 
     print(f"\nStarting download with:")
+    print(f"- Source: {source.upper()}")
     print(f"- Queries: {len(queries)} items")
     print(f"- Min Width: {min_width}px")
     print(f"- Min Size: {min_size}KB")
-    print(f"- Suffix: '{search_suffix}'")
+    print(f"- Suffix: '{search_suffix}'" + (" (Bing only)" if source != "bing" else ""))
     print(f"- Validate Car: {validate_car}")
     print(f"- Variance Threshold: {variance_threshold}")
     print("-" * 30)
     
-    download_images(queries, min_width, min_size, search_suffix, validate_car, variance_threshold)
+    download_images(queries, min_width, min_size, search_suffix, validate_car, variance_threshold, source)

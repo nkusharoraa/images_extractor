@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
             tabContents.forEach(c => c.classList.remove('active'));
-            
+
             tab.classList.add('active');
             document.getElementById(tab.dataset.target).classList.add('active');
         });
@@ -25,14 +25,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Start Download
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+
         const data = {
             queries: document.getElementById('queries').value,
             min_width: document.getElementById('min_width').value,
             min_size: document.getElementById('min_size').value,
             suffix: document.getElementById('suffix').value,
             variance: document.getElementById('variance').value,
-            validate: document.getElementById('validate').checked
+            validate: document.getElementById('validate').checked,
+            source: document.querySelector('input[name="source"]:checked').value
         };
 
         try {
@@ -41,9 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            
+
             const result = await response.json();
-            
+
             if (response.ok) {
                 setRunningState(true);
                 addLog('System', 'Download started...');
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stopBtn.disabled = !isRunning;
         statusIndicator.textContent = isRunning ? 'Running...' : 'Ready';
         statusIndicator.classList.toggle('running', isRunning);
-        
+
         if (!isRunning) {
             if (logSource) {
                 logSource.close();
@@ -90,9 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startLogStream() {
         if (logSource) logSource.close();
-        
+
         logSource = new EventSource('/logs');
-        
+
         logSource.onmessage = (event) => {
             const message = event.data;
             if (message === 'DONE') {
@@ -105,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 addLog('Info', message);
             }
         };
-        
+
         logSource.onerror = () => {
             // Connection lost (or closed), usually fine to just close
             // logSource.close();
@@ -117,10 +118,10 @@ document.addEventListener('DOMContentLoaded', () => {
         line.className = 'log-line';
         if (type === 'Error') line.classList.add('error');
         if (type === 'System') line.classList.add('success');
-        
+
         const time = new Date().toLocaleTimeString();
         line.textContent = `[${time}] ${message}`;
-        
+
         logConsole.appendChild(line);
         logConsole.scrollTop = logConsole.scrollHeight;
     }
@@ -135,10 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('/gallery');
             const images = await response.json();
-            
+
             // Simple diffing could be better, but clearing is safer for now
             galleryGrid.innerHTML = '';
-            
+
             images.forEach(src => {
                 const div = document.createElement('div');
                 div.className = 'gallery-item';

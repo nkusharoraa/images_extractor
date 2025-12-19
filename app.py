@@ -31,6 +31,7 @@ def start_download():
     suffix = data.get('suffix', 'car studio background')
     validate = data.get('validate', True)
     variance = int(data.get('variance', 500))
+    source = data.get('source', 'bing')  # Get source (bing or alphacoders)
     
     stop_event.clear()
     
@@ -43,6 +44,7 @@ def start_download():
                 search_suffix=suffix,
                 validate_car=validate,
                 variance_threshold=variance,
+                source=source,  # Pass source parameter
                 stop_event=stop_event,
                 log_queue=log_queue
             )

@@ -243,6 +243,68 @@ input[type="checkbox"] {
     cursor: pointer;
 }
 
+/* Radio Button Group Styling */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.radio-label:hover {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-color);
+}
+
+.radio-label input[type="radio"] {
+    display: none;
+}
+
+.radio-custom {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.radio-label input[type="radio"]:checked + .radio-custom {
+    border-color: var(--accent-color);
+    background-color: var(--accent-color);
+}
+
+.radio-label input[type="radio"]:checked + .radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.radio-label input[type="radio"]:checked ~ span:not(.radio-custom) {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
 .actions {
     display: grid;
     grid-template-columns: 1fr 1fr;

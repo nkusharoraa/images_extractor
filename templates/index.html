@@ -40,7 +40,29 @@
                 <form id="config-form">
                     <div class="form-group">
                         <label for="queries">Search Queries (comma separated)</label>
-                        <textarea id="queries" rows="3" placeholder="e.g. Sunset, Mountain, Ocean">Akaza</textarea>
+                        <textarea id="queries" rows="3"
+                            placeholder="e.g. Ferrari 488, Porsche 911, Lamborghini Aventador">Akaza</textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Image Source</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="source" value="bing" checked>
+                                <span class="radio-custom"></span>
+                                Bing (Fast, high volume)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="source" value="wallhaven">
+                                <span class="radio-custom"></span>
+                                WallHaven ⭐ (Recommended - API-based)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="source" value="alphacoders">
+                                <span class="radio-custom"></span>
+                                AlphaCoders (May be blocked)
+                            </label>
+                        </div>
                     </div>
 
                     <div class="form-row">
